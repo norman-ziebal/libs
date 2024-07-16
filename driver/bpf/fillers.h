@@ -917,10 +917,12 @@ static __always_inline unsigned long bpf_get_mm_counter(struct mm_struct *mm,
 {
 	long val;
 
-#ifdef HAS_RSS_STAT_ARRAY
-	bpf_probe_read_kernel(&val, sizeof(val), &mm->rss_stat[member].count);
-#else
+// Testing revert HAS_RSS_STAT_ARRAY
+// https://github.com/falcosecurity/libs/commit/026bae193f7e94af64dd1226b9d5d774804bc924
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 2, 0)
 	bpf_probe_read_kernel(&val, sizeof(val), &mm->rss_stat.count[member]);
+#else
+  bpf_probe_read_kernel(&val, sizeof(val), &mm->rss_stat[member].count);
 #endif
 	if (val < 0)
 		val = 0;
